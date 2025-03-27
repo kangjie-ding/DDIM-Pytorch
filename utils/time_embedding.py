@@ -18,10 +18,10 @@ def time_embedding(time_steps, embedding_dim, frequency=10000):
     assert embedding_dim%2==0, "embedding dim is required for even number!"
     time_steps = time_steps.reshape(-1, 1)
     P = torch.zeros((time_steps.shape[0], embedding_dim))
-    X = time_steps/torch.pow(frequency, torch.arange(0, embedding_dim, 2, dtype=torch.float32)/embedding_dim)
+    X = time_steps/(torch.pow(frequency, torch.arange(0, embedding_dim, 2, dtype=torch.float32)/embedding_dim).to(time_steps.device))
     P[:, 0::2] = torch.sin(X)
     P[:, 1::2] = torch.cos(X)
-    return P
+    return P.to(device=time_steps.device)
 
 
 if __name__=="__main__":
