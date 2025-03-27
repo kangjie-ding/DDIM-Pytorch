@@ -11,6 +11,10 @@ from math import sqrt
 cur_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(cur_dir, "../"))
 
+from utils.time_embedding import time_embedding
+
+__all__ = ["group_norm", "TimeStepSupportedSequential", "ResidualBlock", "AttentionBlock", "DownSampleBlock", "UpSampleBlock"]
+
 # Group Normalization
 def group_norm(channel_num, group_num=32):
     assert channel_num%group_num==0, "Invalid parameters for group normalization!"
@@ -68,7 +72,7 @@ class AttentionBlock(nn.Module):
         super().__init__()
         assert input_channels%num_head==0 and input_channels//num_head>0, "Invalid head number for input channels!"
         self.num_head = num_head
-        self.W_qkv = nn.Conv2d(input_channels, 3*input_channels, kernel_size=1)
+        self.W_qkv = nn.Conv2d(input_channels, 3*input_channels, kernel_size=1, bias=False)
         self.conv = nn.Conv2d(input_channels, input_channels, kernel_size=1)
 
     def forward(self, x):
@@ -80,10 +84,10 @@ class AttentionBlock(nn.Module):
         v = v.permute(0, 2, 1)
         attention = torch.matmul(q, k).softmax(dim=-1)
         result = torch.matmul(attention, v).permute(0, 2, 1).reshape(B, -1, H, W)
-        return self.conv(result)+x
+        return self.conv(result) + x
 
 # Downsample Block 
-class DownSample(nn.Module):
+class DownSampleBlock(nn.Module):
     def __init__(self, input_channels, use_conv=True):
         super().__init__()
         self.use_conv = use_conv
@@ -94,11 +98,11 @@ class DownSample(nn.Module):
         return self.conv(x) if self.use_conv else self.ave_pool(x)
     
 # Upsample Block
-class UpSample(nn.Module):
-    def __init__(self, input_channels, upsmaple_type='interpolation', use_conv=True):
+class UpSampleBlock(nn.Module):
+    def __init__(self, input_channels, upsample_type='interpolation', use_conv=True):
         super().__init__()
-        assert upsmaple_type in ['interpolation', 'transpose'], "Invalid upsample type! Available: interpolation, transpose"
-        self.upsample_type = upsmaple_type
+        assert upsample_type in ['interpolation', 'transpose'], "Invalid upsample type! Available: interpolation, transpose"
+        self.upsample_type = upsample_type
         self.use_conv = use_conv
         self.conv = nn.Conv2d(input_channels, input_channels, kernel_size=3, padding=1)
         self.conv_transpose = nn.ConvTranspose2d(input_channels, input_channels, kernel_size=3, stride=2, padding=1)
@@ -115,6 +119,19 @@ class UpSample(nn.Module):
 
 if __name__=="__main__":
     input = torch.randn((2, 256, 64, 64))
-    attention_block = AttentionBlock(256)
-    output = attention_block(input)
+
+    # attention_block = AttentionBlock(256)
+    # output = attention_block(input)
+
+    # upsample_block = UpSampleBlock(256)
+    # output = upsample_block(input)
+
+    # down_sample = DownSampleBlock(256)
+    # output = down_sample(input)
+
+    embedding_dim = 128
+    t = torch.randint(1, 1000, (2, 1))
+    time_feature = time_embedding(t, embedding_dim)
+    residual_block = ResidualBlock(256, 512, embedding_dim)
+    output = residual_block(input, time_feature)
     print(output.shape)
