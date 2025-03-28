@@ -17,7 +17,9 @@ class UNetModel(nn.Module):
         self.model_channels = model_channels
         self.time_embedding_dim = 4*model_channels
         self.time_embedding_transform = nn.Sequential(nn.Linear(self.model_channels, self.time_embedding_dim), nn.SiLU())
-
+        # define flags to add Attention Block
+        attention_mul = [8, 32]
+        attention_flag = 1
         # define input block
         self.input_block = nn.Sequential(nn.Conv2d(input_channels, model_channels, kernel_size=3, padding=1), nn.SiLU())
         cur_channels = self.model_channels
@@ -28,10 +30,11 @@ class UNetModel(nn.Module):
         for i, mul in enumerate(channel_mul_layer):
             layer = []
             for j in range(res_num_layer):
+                attention_flag *= 2
                 layer.append(ResidualBlock(cur_channels, mul*self.model_channels, self.time_embedding_dim, dropout))
                 cur_channels = mul*self.model_channels
-                if j!=res_num_layer-1:
-                    layer.append(AttentionBlock(cur_channels))
+                if attention_flag in attention_mul:
+                    layer.append(AttentionBlock(cur_channels, num_head))
             down_block_channels.append(cur_channels)
             self.down_blocks.append(TimeStepSupportedSequential(*layer))
             self.down_blocks.append(TimeStepSupportedSequential(DownSampleBlock(cur_channels, use_conv=use_conv)))
@@ -42,7 +45,7 @@ class UNetModel(nn.Module):
         for i in range(res_num_layer):
             layer.append(ResidualBlock(cur_channels, cur_channels, self.time_embedding_dim, dropout))
             if i!=res_num_layer-1:
-                layer.append(AttentionBlock(cur_channels))
+                layer.append(AttentionBlock(cur_channels, num_head))
         self.middle_blocks.append(TimeStepSupportedSequential(*layer))
 
         # define up blocks
@@ -51,13 +54,14 @@ class UNetModel(nn.Module):
             layer = []
             self.up_blocks.append(TimeStepSupportedSequential(UpSampleBlock(cur_channels, use_conv=use_conv)))
             for j in range(res_num_layer):
+                attention_flag /= 2
                 if j==0:
                     layer.append(ResidualBlock(down_block_channels.pop()+cur_channels, mul*self.model_channels, self.time_embedding_dim, dropout))
                 else:
                     layer.append(ResidualBlock(cur_channels, mul*self.model_channels, self.time_embedding_dim, dropout))
                 cur_channels = mul*self.model_channels
-                if j!=res_num_layer-1:
-                    layer.append(AttentionBlock(cur_channels))
+                if attention_flag in attention_mul:
+                    layer.append(AttentionBlock(cur_channels, num_head))
             self.up_blocks.append(TimeStepSupportedSequential(*layer))
 
         # define ouput block
@@ -89,7 +93,7 @@ if __name__=="__main__":
     x = torch.randn((2, 3, 64, 64)).to(device=device)
     t = torch.randint(1, 1000, (2, 1)).to(device=device)
     unet = unet.to(device=device)
-    summary(unet, input_size=[(2,3,64,64), (2,1)])
+    summary(unet, input_size=[x.shape, t.shape])
     output = unet(x, t)
     print(output.shape)
         
