@@ -1,0 +1,26 @@
+{
+    "data_settings":{
+        "name": "celebA",
+        "batch_size": 64,
+        "resized_image_size": 64,
+        "normalization_mean": 0.5,
+        "normalization_std": 0.5,
+        "channels": 3
+    },
+
+    "model_settings":{
+        "time_steps": 1000,
+        "channel_mul_layer": [1, 2, 2, 2],
+        "num_head": 1
+    },
+    
+    "training_settings":{
+        "epochs": 1,
+        "lr":5e-4
+    },
+
+    "path_settings":{
+        "weight_save_dir": "output",
+        "log_dir": "logs"
+    }
+}
