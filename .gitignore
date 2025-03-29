@@ -2,7 +2,10 @@
 *.png
 *.pth
 
+/output
 /datasets/data
+/logs
+/.vscode
 
 __pycache__/
 *.pyc
