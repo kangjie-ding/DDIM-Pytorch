@@ -28,8 +28,8 @@ class GaussianDiffusion():
         t = t-1
         sqrt_cumprod_alpha = self.sqrt_cumprod_alpha_schedule[t].reshape(-1, 1, 1, 1)
         sqrt_1_minus_cumprod_alpha = self.sqrt_1_minus_cumprod_alpha_schedule[t].reshape(-1, 1, 1, 1)
-        print(sqrt_cumprod_alpha.shape)
-        print(sqrt_1_minus_cumprod_alpha.shape)
+        # print(sqrt_cumprod_alpha.shape)
+        # print(sqrt_1_minus_cumprod_alpha.shape)
         return sqrt_cumprod_alpha*x0 + sqrt_1_minus_cumprod_alpha*noise
     
     def _pred_x0_from_noise(self, xt, t, pred_noise):
