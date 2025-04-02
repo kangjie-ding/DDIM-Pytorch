@@ -1,21 +1,23 @@
 {
     "data_settings":{
-        "name": "celebA",
+        "name": "MNIST",
+        "root": "datasets/data",
         "batch_size": 64,
-        "resized_image_size": 64,
+        "resized_image_size": 32,
         "normalization_mean": 0.5,
         "normalization_std": 0.5,
-        "channels": 3
+        "channels": 1
     },
 
     "model_settings":{
-        "time_steps": 1000,
-        "channel_mul_layer": [1, 2, 2, 2],
-        "num_head": 1
+        "time_steps": 500,
+        "channel_mul_layer": [1, 2, 2],
+        "attention_mul": [8],
+        "num_head": 4
     },
     
     "training_settings":{
-        "epochs": 1,
+        "epochs": 10,
         "lr":5e-4
     },
 
