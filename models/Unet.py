@@ -12,13 +12,13 @@ from utils.time_embedding import time_embedding
 from models.blocks import *
 
 class UNetModel(nn.Module):
-    def __init__(self, channel_mul_layer=(1, 2, 4, 8, 16), input_channels=3, output_channels=3, model_channels=64, res_num_layer=2, num_head=4, use_conv=True, dropout=0.1):
+    def __init__(self, channel_mul_layer=(1, 2, 4, 8), attention_mul=[8, 32], input_channels=3, output_channels=3, model_channels=96, res_num_layer=2, num_head=4, use_conv=True, dropout=0.1):
         super().__init__()
         self.model_channels = model_channels
         self.time_embedding_dim = 4*model_channels
         self.time_embedding_transform = nn.Sequential(nn.Linear(self.model_channels, self.time_embedding_dim), nn.SiLU())
         # define flags to add Attention Block
-        attention_mul = [8, 32]
+        self.attention_mul = attention_mul
         attention_flag = 1
         # define input block
         self.input_block = nn.Sequential(nn.Conv2d(input_channels, model_channels, kernel_size=3, padding=1), nn.SiLU())
@@ -33,7 +33,7 @@ class UNetModel(nn.Module):
                 attention_flag *= 2
                 layer.append(ResidualBlock(cur_channels, mul*self.model_channels, self.time_embedding_dim, dropout))
                 cur_channels = mul*self.model_channels
-                if attention_flag in attention_mul:
+                if attention_flag in self.attention_mul:
                     layer.append(AttentionBlock(cur_channels, num_head))
             down_block_channels.append(cur_channels)
             self.down_blocks.append(TimeStepSupportedSequential(*layer))
@@ -60,7 +60,7 @@ class UNetModel(nn.Module):
                 else:
                     layer.append(ResidualBlock(cur_channels, mul*self.model_channels, self.time_embedding_dim, dropout))
                 cur_channels = mul*self.model_channels
-                if attention_flag in attention_mul:
+                if attention_flag in self.attention_mul:
                     layer.append(AttentionBlock(cur_channels, num_head))
             self.up_blocks.append(TimeStepSupportedSequential(*layer))
 
@@ -83,6 +83,7 @@ class UNetModel(nn.Module):
             if len(module)==1 and isinstance(module[0], UpSampleBlock):
                 x = module(x, time_feature)
             else:
+                assert x.shape[-1]==cat_features[-1].shape[-1], "Dimensions do not match in concatenating precess!Consider choosing approximate channel_mul_layer."
                 x = module(torch.cat((x, cat_features.pop()), dim=1), time_feature)
         return self.output_block(x)
 
