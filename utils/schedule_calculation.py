@@ -9,9 +9,10 @@ sys.path.insert(0, os.path.join(cur_dir, "../"))
 __all__ = ['get_beta_schedule', 'get_alpha_schedule', 'get_cumprod_alpha', 'get_sqrt_cumprod_alpha', 'get_sqrt_1_minus_cumprod_alpha']
 
 def get_beta_schedule(time_steps=1000, method='linear'):
-    assert method in ['linear'], "Unknown method to get beta schedule" # we can add other methods
     if method=='linear':
         return torch.linspace(0.0001, 0.02, time_steps)
+    else:
+        raise NotImplementedError("Unknown method to get beta schedule.") # going to implement others
     
 def get_alpha_schedule(beta_schedule):
     return 1-beta_schedule
