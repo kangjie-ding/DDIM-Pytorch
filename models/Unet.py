@@ -65,7 +65,7 @@ class UNetModel(nn.Module):
             self.up_blocks.append(TimeStepSupportedSequential(*layer))
 
         # define ouput block
-        self.output_block = nn.Sequential(nn.Conv2d(cur_channels, output_channels, kernel_size=3, padding=1), nn.SiLU())
+        self.output_block = nn.Sequential(group_norm(cur_channels), nn.SiLU(), nn.Conv2d(cur_channels, output_channels, kernel_size=3, padding=1))
 
     def forward(self, x, t):
         time_feature = self.time_embedding_transform(time_embedding(t, self.model_channels))
