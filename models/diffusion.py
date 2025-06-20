@@ -66,12 +66,13 @@ class GaussianDiffusion():
     def ddim_fashion_sample(self, model, image_size, channels, sampling_steps=50, sampling_method='uniform', batch_size=16, eta=0.0):
         device = next(model.parameters()).device
         if sampling_method=='uniform':
-            assert self.time_steps%sampling_steps==0, "Invalid sampling steps in DDIM, must be divisible by time steps in DDPM!"
+            assert sampling_steps<=self.time_steps, "Invalid sampling steps in DDIM, must less than time steps training in DDPM!"
+            assert self.time_steps%sampling_steps==0, "Invalid sampling steps in DDIM, must be divisible by time steps training in DDPM!"
             step_length = self.time_steps//sampling_steps
             ddim_time_schedule = range(1, self.time_steps+1, step_length)
             ddim_pre_time = [0]+list(ddim_time_schedule)[:-1]
         else:
-            pass # to do
+            raise NotImplementedError("Other sampling methods are going to implement.")
         xt = torch.randn((batch_size, channels, image_size, image_size)).to(device=device)
         for i in tqdm(range(0, sampling_steps)[::-1], desc="denoising process in DDIM fashion", total=sampling_steps):
             t = torch.full((batch_size, 1), ddim_time_schedule[i]).to(device=device)
@@ -79,11 +80,11 @@ class GaussianDiffusion():
             pred_noise = model(xt, t)
             pred_x0 = self._pred_x0_from_noise(xt, t, pred_noise)
             if i!=0:
-                sigma_t = eta*torch.sqrt((1-self.cumprod_alpha_schedule[pre_t])/(1-self.cumprod_alpha_schedule[t]))*torch.sqrt(1-self.cumprod_alpha_schedule[t]/self.cumprod_alpha_schedule[pre_t])
+                sigma_t = eta*torch.sqrt((1-self.cumprod_alpha_schedule[pre_t-1])/(1-self.cumprod_alpha_schedule[t-1]))*torch.sqrt(1-self.cumprod_alpha_schedule[t-1]/self.cumprod_alpha_schedule[pre_t-1])
                 sigma_t = sigma_t.reshape(-1, 1, 1, 1)
-                dir_point_xt = torch.sqrt(1-self.cumprod_alpha_schedule[pre_t].reshape(-1, 1, 1, 1)-sigma_t**2)*pred_noise
+                dir_point_xt = torch.sqrt(1-self.cumprod_alpha_schedule[pre_t-1].reshape(-1, 1, 1, 1)-sigma_t**2)*pred_noise
                 random_noise = torch.rand_like(sigma_t)
-                xt = torch.sqrt(self.cumprod_alpha_schedule[pre_t]).reshape(-1, 1, 1, 1)*pred_x0+dir_point_xt+sigma_t*random_noise
+                xt = torch.sqrt(self.cumprod_alpha_schedule[pre_t-1]).reshape(-1, 1, 1, 1)*pred_x0+dir_point_xt+sigma_t*random_noise
             else:
                 xt = pred_x0
         return xt
