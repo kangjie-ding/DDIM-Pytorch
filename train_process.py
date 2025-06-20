@@ -48,7 +48,7 @@ if __name__=="__main__":
 
     # dataloader
     transform2Tensor = transforms.Compose([transforms.Resize((image_size, image_size)), transforms.ToTensor(),
-                                           transforms.Normalize(mean=[normal_mean]*channels, std=[normal_std]*channels)])
+                                           transforms.Normalize(mean=normal_mean, std=normal_std)])
     train_dataloader = get_dataloader(data_name, datasets_root, transform2Tensor, batch_size, split="train", download=True)
     print(f"Dataloading Done!")
 
