@@ -20,6 +20,7 @@ if __name__=="__main__":
     channel_mul = model_config["model_settings"]["channel_mul_layer"]
     num_head = model_config["model_settings"]["num_head"]
     attention_mul = model_config["model_settings"]["attention_mul"]
+    time_steps = model_config["model_settings"]["time_steps"]
     normal_mean = model_config["data_settings"]["normalization_mean"]
     normal_std = model_config["data_settings"]["normalization_std"]
     model_save_dir = model_config["path_settings"]["weight_save_dir"]
@@ -30,17 +31,26 @@ if __name__=="__main__":
 
     # model defining
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    diffusion = GaussianDiffusion(device=device)
+    diffusion = GaussianDiffusion(device=device, time_steps=time_steps)
     unet = UNetModel(input_channels=channels, output_channels=channels, channel_mul_layer=channel_mul, num_head=num_head, attention_mul=attention_mul).to(device=device)
     # weights loading
     assert os.path.exists(model_output_path), f"{model_output_path} is not existing!"
     unet.load_state_dict(torch.load(model_output_path))
     # denoising process
     unet.eval()
-    with torch.no_grad():
-        generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16)
-    recoverd_images = (generated_images*normal_std+normal_mean).reshape(4, 4, channels, image_size, image_size)
+    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=50)
+    # generated_images = diffusion.ddpm_fashion_sample(unet, image_size, channels, batch_size=16)
+    recoverd_images = generated_images*normal_std+normal_mean
+    # images saving
+    images_output_dir = "images_output/"
+    if not os.path.exists(images_output_dir):
+        os.makedirs(images_output_dir, exist_ok=True)
+    for index, image in enumerate(recoverd_images):
+        image = transform2Image(image)
+        save_path = images_output_dir+f"image_{index}.png"
+        image.save(save_path)
     # images showing
+    recoverd_images = recoverd_images.reshape(4, 4, channels, image_size, image_size)
     fig = plt.figure(figsize=(12, 12), constrained_layout=True)
     gs = fig.add_gridspec(4, 4)
 
