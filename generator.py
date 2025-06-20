@@ -38,11 +38,11 @@ if __name__=="__main__":
     unet.load_state_dict(torch.load(model_output_path))
     # denoising process
     unet.eval()
-    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=100)
+    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=50)
     # generated_images = diffusion.ddpm_fashion_sample(unet, image_size, channels, batch_size=16)
     recoverd_images = generated_images*torch.tensor(normal_std, device=device).view(1, -1, 1, 1)+torch.tensor(normal_mean, device=device).view(1, -1, 1, 1)
     # images saving
-    images_output_dir = "images_output/"
+    images_output_dir = "output/images/"
     if not os.path.exists(images_output_dir):
         os.makedirs(images_output_dir, exist_ok=True)
     for index, image in enumerate(recoverd_images):
@@ -60,4 +60,5 @@ if __name__=="__main__":
             image = transform2Image(recoverd_images[row][col])
             f_ax.imshow(image, cmap="gray")
             f_ax.axis("off")
+    plt.savefig("assets/output.png", dpi=500, bbox_inches='tight')
     plt.show()
