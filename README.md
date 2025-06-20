@@ -10,6 +10,11 @@ After obtaining the weights through training, run the following code to test ima
 ```sh
 python .\generator.py        
 ```
+
+In addition to DDPM sampling, we also provide DDIM sampling. You can specify the number of sampling steps by setting the **sampling_steps**. When the number of sampling steps equals the number of training timesteps used in DDPM, the DDIM sampling degenerates into DDPM sampling.
+```sh
+generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=100)
+```
 # Reference
 [DDPM](https://arxiv.org/pdf/2006.11239)
 
