@@ -1,12 +1,12 @@
 {
     "data_settings":{
-        "name": "MNIST",
+        "name": "CIFAR10",
         "root": "datasets/data",
-        "batch_size": 64,
+        "batch_size": 32,
         "resized_image_size": 32,
-        "normalization_mean": 0.5,
-        "normalization_std": 0.5,
-        "channels": 1
+        "normalization_mean": [0.4914, 0.4822, 0.4465],
+        "normalization_std": [0.2023, 0.1994, 0.2010],
+        "channels": 3
     },
 
     "model_settings":{
