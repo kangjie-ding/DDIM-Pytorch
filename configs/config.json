@@ -12,7 +12,7 @@
     "model_settings":{
         "time_steps": 500,
         "channel_mul_layer": [1, 2, 2],
-        "attention_mul": [8],
+        "attention_mul": [4],
         "num_head": 4
     },
     
