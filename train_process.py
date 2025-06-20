@@ -71,7 +71,7 @@ if __name__=="__main__":
     unet.train()
     for epoch in range(epochs):
         total_loss = 0
-        for (images, labels) in tqdm(train_dataloader, desc="training preocess", total=len(train_dataloader)):
+        for (images, labels) in tqdm(train_dataloader, desc="training preocess", total=len(train_dataloader), dynamic_ncols=True):
             optimizer.zero_grad()
             images = images.to(device)
             t = torch.randint(1, time_steps, (batch_size, 1), device=device)
