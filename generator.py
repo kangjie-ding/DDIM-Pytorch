@@ -26,7 +26,7 @@ if __name__=="__main__":
     model_save_dir = model_config["path_settings"]["weight_save_dir"]
     data_name = model_config["data_settings"]["name"]
     image_size = model_config["data_settings"]["resized_image_size"]
-    model_output_path = os.path.join(model_save_dir, "weights_"+data_name+".pth")
+    model_output_path = os.path.join(model_save_dir, f"weights_{data_name}_{time_steps}.pth")
     print("Configuring Done!")
 
     # model defining
@@ -38,7 +38,7 @@ if __name__=="__main__":
     unet.load_state_dict(torch.load(model_output_path))
     # denoising process
     unet.eval()
-    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=50)
+    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=200)
     # generated_images = diffusion.ddpm_fashion_sample(unet, image_size, channels, batch_size=16)
     recoverd_images = generated_images*torch.tensor(normal_std, device=device).view(1, -1, 1, 1)+torch.tensor(normal_mean, device=device).view(1, -1, 1, 1)
     # images saving
