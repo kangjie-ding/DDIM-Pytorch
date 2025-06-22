@@ -2,7 +2,7 @@
     "data_settings":{
         "name": "MNIST",
         "root": "datasets/data",
-        "batch_size": 32,
+        "batch_size": 64,
         "resized_image_size": 32,
         "normalization_mean": [0.5], 
         "normalization_std": [0.5], 
@@ -10,7 +10,7 @@
     },
 
     "model_settings":{
-        "time_steps": 500,
+        "time_steps": 1000,
         "channel_mul_layer": [1, 2, 2],
         "attention_mul": [4],
         "num_head": 4
@@ -18,7 +18,10 @@
     
     "training_settings":{
         "epochs": 10,
-        "lr":5e-4
+        "lr":5e-4, 
+        "accumulation_steps": 10,
+        "amp_dtype": "float16",
+        "grad_clip_norm": 1.0
     },
 
     "path_settings":{
