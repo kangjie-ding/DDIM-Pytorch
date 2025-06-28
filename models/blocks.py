@@ -12,8 +12,10 @@ cur_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(cur_dir, "../"))
 
 from utils.time_embedding import time_embedding
+from utils.rope import VisionROPE
 
 __all__ = ["group_norm", "TimeStepSupportedSequential", "ResidualBlock", "AttentionBlock", "DownSampleBlock", "UpSampleBlock"]
+
 
 # Group Normalization
 def group_norm(channel_num, group_num=32):
@@ -68,17 +70,24 @@ class ResidualBlock(TimeStepBlock):
     
 # Attention Block(with shortcut)
 class AttentionBlock(nn.Module):
-    def __init__(self, input_channels, num_head=4):
+    def __init__(self, input_channels, add_2d_rope=False, num_head=4):
         super().__init__()
         assert input_channels%num_head==0 and input_channels//num_head>0, "Invalid head number for input channels!"
         self.num_head = num_head
+        self.add_2d_rope = add_2d_rope
         self.W_qkv = nn.Conv2d(input_channels, 3*input_channels, kernel_size=1, bias=False)
         self.conv = nn.Conv2d(input_channels, input_channels, kernel_size=1)
 
     def forward(self, x):
         B, C, H, W = x.shape
         x_ = self.W_qkv(x)
-        q, k, v = x_.reshape(B*self.num_head, -1, H*W).chunk(3, dim=1)
+        q, k, v = x_.reshape(B, self.num_head, -1, H, W).chunk(3, dim=2)
+        if self.add_2d_rope:
+            vision_rope = VisionROPE(C//self.num_head//2, H, W)
+            q, k = vision_rope(q, k)
+        q = q.reshape(B*self.num_head, -1, H*W)
+        k = k.reshape(B*self.num_head, -1, H*W)
+        v = v.reshape(B*self.num_head, -1, H*W)
         scale = 1./sqrt(C//self.num_head)
         q = q.permute(0, 2, 1)*scale
         v = v.permute(0, 2, 1)

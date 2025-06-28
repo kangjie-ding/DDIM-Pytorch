@@ -13,7 +13,8 @@
         "time_steps": 1000,
         "channel_mul_layer": [1, 2, 2],
         "attention_mul": [4],
-        "num_head": 4
+        "num_head": 4,
+        "add_2d_rope": false
     },
     
     "training_settings":{

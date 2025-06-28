@@ -32,6 +32,7 @@ if __name__=="__main__":
     channel_mul = model_config["model_settings"]["channel_mul_layer"]
     attention_mul = model_config["model_settings"]["attention_mul"]
     num_head = model_config["model_settings"]["num_head"]
+    add_2d_rope = model_config["model_settings"]["add_2d_rope"]
 
     # training settings
     lr = model_config["training_settings"]["lr"]
@@ -39,6 +40,7 @@ if __name__=="__main__":
     amp_dtype = model_config["training_settings"]["amp_dtype"]
     accumulation_steps = model_config["training_settings"]["accumulation_steps"]
     grad_clip_norm = model_config["training_settings"]["grad_clip_norm"]
+    
 
     # data settings
     image_size = model_config["data_settings"]["resized_image_size"]
@@ -70,7 +72,8 @@ if __name__=="__main__":
     train_dataloader = get_dataloader(data_name, datasets_root, transform2Tensor, batch_size, split="train", download=True)
     print(f"Dataloading Done!")
     # loading models
-    unet = UNetModel(input_channels=channels, output_channels=channels, attention_mul=attention_mul, channel_mul_layer=channel_mul, num_head=num_head).to(device=device)
+    unet = UNetModel(input_channels=channels, output_channels=channels, attention_mul=attention_mul, channel_mul_layer=channel_mul,
+                      num_head=num_head, add_2d_rope=add_2d_rope).to(device=device)
     summary(unet, input_size=[(1, channels, image_size, image_size), (1, 1)])
     diffusion = GaussianDiffusion(device=device, time_steps=time_steps)
 

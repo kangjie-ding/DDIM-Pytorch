@@ -16,29 +16,34 @@ if __name__=="__main__":
     # configuring
     config_file_path = "configs/config.json"
     model_config = load_config(config_file_path)
-    channels = model_config["data_settings"]["channels"]
+    
     channel_mul = model_config["model_settings"]["channel_mul_layer"]
     num_head = model_config["model_settings"]["num_head"]
     attention_mul = model_config["model_settings"]["attention_mul"]
     time_steps = model_config["model_settings"]["time_steps"]
+    add_2d_rope = model_config["model_settings"]["add_2d_rope"]
+
     normal_mean = model_config["data_settings"]["normalization_mean"]
     normal_std = model_config["data_settings"]["normalization_std"]
-    model_save_dir = model_config["path_settings"]["weight_save_dir"]
     data_name = model_config["data_settings"]["name"]
     image_size = model_config["data_settings"]["resized_image_size"]
+    channels = model_config["data_settings"]["channels"]
+
+    model_save_dir = model_config["path_settings"]["weight_save_dir"]
     model_output_path = os.path.join(model_save_dir, f"weights_{data_name}_{time_steps}.pth")
     print("Configuring Done!")
 
     # model defining
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     diffusion = GaussianDiffusion(device=device, time_steps=time_steps)
-    unet = UNetModel(input_channels=channels, output_channels=channels, channel_mul_layer=channel_mul, num_head=num_head, attention_mul=attention_mul).to(device=device)
+    unet = UNetModel(input_channels=channels, output_channels=channels, channel_mul_layer=channel_mul,
+                      num_head=num_head, attention_mul=attention_mul, add_2d_rope=add_2d_rope).to(device=device)
     # weights loading
     assert os.path.exists(model_output_path), f"{model_output_path} is not existing!"
     unet.load_state_dict(torch.load(model_output_path))
     # denoising process
     unet.eval()
-    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=200)
+    generated_images = diffusion.ddim_fashion_sample(unet, image_size, channels, batch_size=16, sampling_steps=500)
     # generated_images = diffusion.ddpm_fashion_sample(unet, image_size, channels, batch_size=16)
     recoverd_images = generated_images*torch.tensor(normal_std, device=device).view(1, -1, 1, 1)+torch.tensor(normal_mean, device=device).view(1, -1, 1, 1)
     # images saving

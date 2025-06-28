@@ -12,7 +12,8 @@ from utils.time_embedding import time_embedding
 from models.blocks import *
 
 class UNetModel(nn.Module):
-    def __init__(self, channel_mul_layer=(1, 2, 4, 8), attention_mul=[8, 32], input_channels=3, output_channels=3, model_channels=96, res_num_layer=2, num_head=4, use_conv=True, dropout=0.1):
+    def __init__(self, channel_mul_layer=(1, 2, 4, 8), attention_mul=[8, 32], input_channels=3, output_channels=3, model_channels=96, res_num_layer=2, num_head=4,
+                  use_conv=True, dropout=0.1, add_2d_rope=False):
         super().__init__()
         self.model_channels = model_channels
         self.time_embedding_dim = 4*model_channels
